@@ -1,0 +1,25 @@
+=== Include directive in main sshd_config ===
+24:Include /etc/ssh/sshd_config.d/*.conf
+=== sshd_config.d contents ===
+total 8
+drwxr-xr-x 2 root root 4096 Oct  8 23:36 .
+drwxr-xr-x 4 root root 4096 Nov  8 23:36 ..
+=== socket activation ===
+enabled
+active
+=== ssh service ===
+enabled
+active
+=== sshd -T port/password ===
+=== ufw status ===
+ERROR: You need to be root to run this script
+=== fail2ban ===
+inactive
+=== auditd ===
+inactive
+=== apparmor ===
+active
+=== groups ===
+no sshusers group
+=== sudoers for tuananh ===
+sudo: A terminal is required to authenticate

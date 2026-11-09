@@ -1,0 +1,62 @@
+﻿==============================================
+ BTL end to end test
+ target: 192.168.118.128   as: tuananh
+==============================================
+
+[1] Connectivity and authentication
+  [32mPASS[0m  key based login works
+  [32mPASS[0m  password authentication is refused
+
+[2] Access control
+  [32mPASS[0m  root login is refused
+  [32mPASS[0m  an account outside sshusers is refused
+
+[3] Configuration hardening
+  [32mPASS[0m  sshd config passes validation
+  [32mPASS[0m  password authentication is disabled in the effective config
+  [32mPASS[0m  root login is disabled in the effective config
+  [32mPASS[0m  TCP forwarding is disabled
+  [32mPASS[0m  the hardening drop-in is present
+
+[4] SCP transfers
+  [32mPASS[0m  scp uploads a file
+  [32mPASS[0m  the uploaded file has the right content
+  [32mPASS[0m  scp downloads a file
+  [32mPASS[0m  the downloaded file has the right content
+  [32mPASS[0m  scp copies a directory recursively
+  [32mPASS[0m  the recursive copy kept the nested file
+  [32mPASS[0m  scp refuses a path traversal attempt
+  [32mPASS[0m  no file escaped the intended directory
+  [32mPASS[0m  the project SCP client uploads a file
+  [32mPASS[0m  the file uploaded by the project SCP client is correct
+  [32mPASS[0m  the project SCP client downloads a file
+  [32mPASS[0m  the file downloaded by the project SCP client is correct
+  [32mPASS[0m  the project SCP client copies a directory recursively
+  [32mPASS[0m  the recursive copy by the project SCP client kept the nested file
+  [32mPASS[0m  the system scp can read a file uploaded by the project client
+  [32mPASS[0m  the file read by the system scp is correct
+
+[5] SFTP transfers
+  [32mPASS[0m  sftp uploads a file
+  [32mPASS[0m  sftp downloads a file
+  [32mPASS[0m  the SFTP download is correct
+  [32mPASS[0m  sftp can list a directory
+
+[6] SFTP jail (only when the account exists)
+  [32mPASS[0m  the SFTP account cannot open a shell
+  [32mPASS[0m  the SFTP account cannot reach /etc
+  [32mPASS[0m  no file was written outside the jail
+  [32mPASS[0m  the jail directory is owned by root
+  [32mPASS[0m  the upload directory belongs to the account
+
+[7] Defence in depth
+  [32mPASS[0m  fail2ban is running
+  [32mPASS[0m  the sshd jail is enabled
+  [32mPASS[0m  the firewall is active
+  [32mPASS[0m  auditd is running
+
+[8] Cleanup
+
+==============================================
+ passed: 38   failed: 0
+==============================================

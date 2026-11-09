@@ -1,0 +1,225 @@
+﻿===== /etc/ssh/sshd_config.d/00-btl-hardening.conf =====
+# ============================================================
+# BTL - Secured Network Service Configuration
+# Generated file. Do not edit by hand.
+# Target: Ubuntu / OpenSSH server, port 22
+# ============================================================
+
+### Listener ###
+Port 22
+ListenAddress 0.0.0.0
+
+### Who may log in ###
+# Only members of the listed groups may establish a session.
+PermitRootLogin no
+PermitEmptyPasswords no
+UsePAM yes
+AllowGroups sshusers
+
+### Authentication ###
+# Public key only. Password and keyboard-interactive are refused so
+# that a stolen passphrase cannot be used from an unexpected host.
+PubkeyAuthentication yes
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+ChallengeResponseAuthentication no
+GSSAPIAuthentication no
+HostbasedAuthentication no
+PermitUserEnvironment no
+
+### Brute force resistance ###
+MaxAuthTries 3
+LoginGraceTime 30
+MaxSessions 10
+MaxStartups 10:30:60
+
+### Forwarding and tunnelling are disabled ###
+# None of these are needed for SCP/SFTP file transfer and each one
+# is a way for a user to reach hosts they should not reach.
+X11Forwarding no
+AllowAgentForwarding no
+AllowTcpForwarding no
+PermitTunnel no
+GatewayPorts no
+StreamLocalBindMask 0077
+
+### Session hygiene ###
+ClientAliveInterval 300
+ClientAliveCountMax 2
+TCPKeepAlive yes
+PrintMotd no
+PrintLastLog yes
+AcceptEnv LANG LC_*
+SetEnv PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Banner /etc/ssh/banner.txt
+
+### Crypto policy ###
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256
+KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group-exchange-sha256
+HostKeyAlgorithms ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,rsa-sha2-512,rsa-sha2-256
+
+### Logging ###
+SyslogFacility AUTH
+LogLevel VERBOSE
+
+===== /etc/ssh/sshd_config.d/10-btl-sftp.conf =====
+### SFTP only accounts, jailed into their own directory ###
+# These accounts cannot open a shell; they can only transfer files
+# and they cannot see anything outside of their jail.
+
+Match User ftpsvc
+    ChrootDirectory /opt/sftp-jails/ftpsvc
+    ForceCommand internal-sftp -d /upload
+    AllowTcpForwarding no
+    X11Forwarding no
+    PermitTTY no
+    GatewayPorts no
+
+Match all
+
+===== /etc/fail2ban/jail.d/btl-sshd.local =====
+# ============================================================
+# BTL - fail2ban configuration
+# Generated file. Do not edit by hand.
+# ============================================================
+
+[DEFAULT]
+bantime  = 1h
+findtime = 10m
+maxretry = 3
+ignoreip = 127.0.0.1/8 ::1
+# Repeated offenders get an ever longer ban, capped at one week.
+bantime.increment = true
+bantime.factor    = 1
+bantime.maxtime   = 1w
+backend = systemd
+
+[sshd]
+enabled  = true
+port     = 22
+maxretry = 3
+# 'aggressive' also catches scanners that connect but never
+# attempt to authenticate.
+mode     = aggressive
+backend  = systemd
+
+[recidive]
+enabled  = true
+bantime  = 1w
+findtime = 1d
+
+===== /etc/audit/rules.d/50-btl.rules =====
+# ============================================================
+# BTL - auditd rules
+# Generated file. Do not edit by hand.
+# ============================================================
+
+## SSH configuration changes ##
+-w /etc/ssh/sshd_config -p wa -k btl_sshd_config
+
+## SSH key material ##
+
+## Privilege escalation configuration ##
+-w /etc/sudoers -p wa -k btl_sudoers
+-w /etc/sudoers.d -p wa -k btl_sudoers
+
+## User and group databases ##
+-w /etc/passwd -p wa -k btl_identity
+-w /etc/group -p wa -k btl_identity
+-w /etc/shadow -p wa -k btl_identity
+
+## SFTP jail configuration ##
+-w /opt/sftp-jails -p wa -k btl_sftp_jail
+
+## Commands executed as root ##
+-a always,exit -F arch=b64 -F euid=0 -S execve -k btl_root_commands
+
+## The sshd binary itself must not be replaced ##
+-w /usr/sbin/sshd -p x -k btl_sshd_exec
+
+===== /etc/ssh/banner.txt =====
+This system is restricted to authorised users.
+All connections are logged and monitored.
+Misuse of this system is a criminal offence.
+
+===== admin accounts =====
+#!/usr/bin/env bash
+# BTL - create the SSH administrator accounts.
+set -euo pipefail
+
+if ! getent group sshusers >/dev/null; then
+    groupadd sshusers
+    echo 'created group sshusers'
+fi
+
+# Keep the provisioning account (tuananh) able to log in.
+usermod -aG sshusers tuananh 2>/dev/null || true
+
+if ! id -u btladmin >/dev/null 2>&1; then
+    adduser --disabled-password --gecos '' btladmin
+    echo 'created user btladmin'
+fi
+usermod -aG sshusers btladmin
+
+# The accounts must not be able to log in with a password.
+for user in btladmin; do
+    passwd -l "$user" || true
+done
+
+# Install the public keys for btladmin.
+home_dir=$(getent passwd btladmin | cut -d: -f6)
+mkdir -p "$home_dir/.ssh"
+chmod 700 "$home_dir/.ssh"
+printf '%s\n' 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDncPehI/a1/UOzlzYVs19nJIGw1xB3XtSlWp8lrSePa btl-admin@BTL-workstation' >> "$home_dir/.ssh/authorized_keys"
+chown -R btladmin:btladmin "$home_dir/.ssh"
+chmod 600 "$home_dir/.ssh/authorized_keys"
+echo 'installed 1 key(s) for btladmin'
+
+# Install the public keys for tuananh.
+home_dir=$(getent passwd tuananh | cut -d: -f6)
+mkdir -p "$home_dir/.ssh"
+chmod 700 "$home_dir/.ssh"
+printf '%s\n' 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDncPehI/a1/UOzlzYVs19nJIGw1xB3XtSlWp8lrSePa btl-admin@BTL-workstation' >> "$home_dir/.ssh/authorized_keys"
+chown -R tuananh:tuananh "$home_dir/.ssh"
+chmod 600 "$home_dir/.ssh/authorized_keys"
+echo 'installed 1 key(s) for tuananh'
+
+===== sftp accounts =====
+#!/usr/bin/env bash
+# BTL - create the jailed SFTP-only accounts.
+set -euo pipefail
+
+mkdir -p /opt/sftp-jails
+
+if ! id -u ftpsvc >/dev/null 2>&1; then
+    adduser --disabled-password --gecos '' ftpsvc
+    echo 'created user ftpsvc'
+fi
+
+usermod -aG sshusers ftpsvc
+
+mkdir -p /home/ftpsvc /opt/sftp-jails/ftpsvc /opt/sftp-jails/ftpsvc/upload
+
+# The jail root must be owned by root and not writable by
+# anyone else, otherwise chroot() could be escaped.
+chown root:root /opt/sftp-jails/ftpsvc
+chmod 755 /opt/sftp-jails/ftpsvc
+
+# Only the upload directory belongs to the account.
+chown ftpsvc:ftpsvc /opt/sftp-jails/ftpsvc/upload
+chmod 700 /opt/sftp-jails/ftpsvc/upload
+
+# The home directory has to exist for the account to start a
+# session, but it is not part of the jail.
+chown ftpsvc:ftpsvc /home/ftpsvc
+chmod 750 /home/ftpsvc
+
+mkdir -p /home/ftpsvc/.ssh
+chmod 700 /home/ftpsvc/.ssh
+printf '%s\n' 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGKMvX3mhYQG30Oatszqz8uQ8yan4vsqsAGDGLpTPiPs btl-sftp@BTL-workstation' >> /home/ftpsvc/.ssh/authorized_keys
+chown -R ftpsvc:ftpsvc /home/ftpsvc/.ssh
+chmod 600 /home/ftpsvc/.ssh/authorized_keys
+passwd -l ftpsvc || true
+echo 'installed 1 key(s) for ftpsvc'
+

@@ -1,0 +1,153 @@
+# BTL - Secured Network Service Configuration with SCP, SFTP and SSH
+
+Đồ án bài tập lớn: cấu hình dịch vụ mạng an toàn với SCP, SFTP và SSH.
+
+> **Ngôn ngữ tài liệu:** Tiếng Việt (bài nộp báo cáo). Code và comment trong
+> mã nguồn dùng tiếng Anh theo thông lệ lập trình.
+
+## Mục tiêu
+
+Xây dựng một bộ công cụ và một quy trình triển khai để:
+
+1. **Hardening** máy chủ Ubuntu: cấu hình `sshd` chỉ chấp nhận xác thực
+   bằng khóa công khai, chặn đăng nhập root, giới hạn forwarding, giới hạn
+   số lần thử và thêm fail2ban + ufw + auditd.
+2. **Triển khai SCP/SFTP an toàn**: mã hoá giao thức SCP từ đầu, kèm cơ chế
+   chống path traversal và symlink escape.
+3. **Cung cấp client CLI** để quản trị khóa host, kiểm tra cấu hình, chuyển
+   file và provisioning máy chủ mới.
+
+## Cấu trúc thư mục
+
+```
+BTL_Linux/
+├── btl/                  # Mã nguồn chính
+│   ├── utils/            # Logging, error, path safety
+│   ├── ssh/              # Transport SSH + xác minh host key
+│   ├── scp/              # Giao thức SCP (codec thuần + client/server)
+│   ├── sftp/             # Client SFTP (có virtual root) + server
+│   ├── security/         # Sinh cấu hình hardening + auditor
+│   ├── provision/        # Provisioning Ubuntu idempotent
+│   └── cli.py            # Giao diện dòng lệnh
+├── tests/                # Unit test (pytest)
+├── scripts/              # Script hỗ trợ, cài đặt
+├── config/               # File cấu hình mẫu
+├── wiki/                 # Tài liệu dự án (bạn đang ở đây)
+└── README.md             # Mô tả tổng quan
+```
+
+## Kết quả kiểm chứng
+
+Dự án đã được triển khai và kiểm thử **trên máy ảo thật**:
+
+| Hạng mục | Kết quả |
+| --- | --- |
+| Unit test | **200 passed, 1 skipped** |
+| Bộ test E2E tích hợp | **38/38 PASS** |
+| Kiểm định cấu hình (`btl audit`) | **18/18 compliant** |
+| Lớp phòng thủ hoạt động | 5/5 (sshd hardening, ufw, fail2ban, auditd, chroot jail) |
+| Tương thích OpenSSH | Codec SCP của dự án đọc/ghi được với `/usr/bin/scp` và `/usr/bin/sftp` thật, hai chiều |
+
+> **Môi trường kiểm thử:** VMware Workstation 17 (NAT / VMnet8
+> `192.168.118.0/24`), Ubuntu 26.04 LTS, OpenSSH 10.2, máy chủ
+> `192.168.118.128:22`.
+>
+> Chi tiết đầy đủ: [wiki/08-kiem-tra-bao-mat.md](wiki/08-kiem-tra-bao-mat.md).
+
+## Tái lập bộ kiểm thử E2E
+
+```bash
+# Trên Ubuntu
+./scripts/test-e2e.sh 192.168.118.128 tuananh ~/.ssh/id_ed25519
+```
+
+```powershell
+# Trên Windows (Git Bash)
+& "C:\Program Files\Git\bin\bash.exe" scripts/test-e2e.sh `
+    192.168.118.128 tuananh "C:/Users/<bạn>/.ssh/id_ed25519"
+```
+
+Ba điều kiện trên Windows:
+
+1. Tài khoản chạy test cần quyền `sudo` không mật khẩu (script dùng `sudo -n`).
+2. Server **không** dùng `ufw limit` cho cổng SSH, nếu không bộ test sẽ bị
+   firewall chặn giữa chừng.
+3. `fail2ban` phải loại trừ dải quản trị (`--fail2ban-ignore`).
+
+## Cài đặt nhanh
+
+```bash
+# Máy chủ Ubuntu (máy ảo VMware)
+sudo apt update
+sudo apt install -y python3-venv python3-pip openssh-server fail2ban ufw auditd
+
+# Máy trạm (Windows hoặc Linux)
+python -m venv .venv
+. .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+pip install -e .
+```
+
+## Sử dụng
+
+```bash
+# Xem các lệnh con
+btl --help
+
+# Render cấu hình hardened sshd (không cần kết nối máy chủ)
+btl render sshd --port 2222
+
+# Provision một máy chủ Ubuntu mới
+btl provision --host 192.168.118.128 --user tuananh \
+              --identity ~/.ssh/id_ed25519 \
+              --admin-users btladmin --sftp-users ftpsvc \
+              --admin-public-key ~/.ssh/id_ed25519.pub \
+              --sftp-public-key ~/.ssh/id_ed25519_sftp.pub \
+              --fail2ban-ignore 192.168.118.0/24 \
+              --dry-run
+
+# Kiểm tra cấu hình sau khi hardening
+btl audit                                          # chạy trên máy chủ
+btl audit 192.168.118.128 --user tuananh \
+     --identity ~/.ssh/id_ed25519 --sudo-password '<pwd>'   # từ máy trạm
+
+# Chuyển file (lưu ý: <host> là tham số vị trí, không phải --host)
+btl scp 192.168.118.128 -u alice -i ~/.ssh/id_ed25519 \
+        ./file.txt /home/alice/
+
+btl sftp 192.168.118.128 -u alice -i ~/.ssh/id_ed25519 \
+         --root /home/alice --path /
+```
+
+## Tài liệu chi tiết
+
+Xem thư mục [`wiki/`](wiki/) :
+
+| Tài liệu | Nội dung |
+| --- | --- |
+| [wiki/01-phan-tich-yeu-cau.md](wiki/01-phan-tich-yeu-cau.md) | Phân tích đề tài và các yêu cầu chức năng |
+| [wiki/02-kien-truc-he-thong.md](wiki/02-kien-truc-he-thong.md) | Kiến trúc hệ thống, luồng dữ liệu |
+| [wiki/03-tien-trinh-du-an.md](wiki/03-tien-trinh-du-an.md) | Tiến trình dự án, đã làm / đang làm |
+| [wiki/04-ke-hoach-phat-trien.md](wiki/04-ke-hoach-phat-trien.md) | Kế hoạch phát triển theo giai đoạn |
+| [wiki/05-bao-cao-ky-thuat.md](wiki/05-bao-cao-ky-thuat.md) | Báo cáo kỹ thuật (dùng để nộp) |
+| [wiki/06-huong-dan-cai-dat.md](wiki/06-huong-dan-cai-dat.md) | Hướng dẫn cài đặt trên VMware/Ubuntu |
+| [wiki/07-huong-dan-su-dung.md](wiki/07-huong-dan-su-dung.md) | Hướng dẫn sử dụng chi tiết từng lệnh |
+| [wiki/08-kiem-tra-bao-mat.md](wiki/08-kiem-tra-bao-mat.md) | Quy trình kiểm tra và đối chiếu bảo mật |
+| [wiki/09-tai-lieu-tham-khao.md](wiki/09-tai-lieu-tham-khao.md) | Tài liệu tham khảo, trích dẫn nguồn |
+| [wiki/10-nhat-ky-thuat.md](wiki/10-nhat-ky-thuat.md) | Nhật ký các phát hiện kỹ thuật |
+
+## Yêu cầu môi trường
+
+- **Máy chủ:** Ubuntu Server 22.04 LTS trở lên trên VMware Workstation
+  (đã kiểm thử trên Ubuntu 26.04 LTS / OpenSSH 10.2)
+- **Python:** 3.10+ (kiểm tra bằng `python3 --version`)
+- **Thư viện:** `paramiko`, `pyyaml`, `pytest`
+- **Mạng:** Máy chủ dùng NAT/Host-only; môi trường kiểm thử là
+  `192.168.118.0/24` (VMnet8)
+
+## Trạng thái
+
+Dự án đã hoàn thành và được kiểm chứng trên máy ảo thật. Xem
+[wiki/03-tien-trinh-du-an.md](wiki/03-tien-trinh-du-an.md) để biết tiến độ
+chi tiết và [wiki/08-kiem-tra-bao-mat.md](wiki/08-kiem-tra-bao-mat.md) cho
+kết quả kiểm tra bảo mật.

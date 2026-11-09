@@ -1,0 +1,5 @@
+
+created /etc/sudoers.d/90-btl-tuananh
+/etc/sudoers.d/90-btl-tuananh: parsed OK
+usermod: no changes
+shell: /bin/bash

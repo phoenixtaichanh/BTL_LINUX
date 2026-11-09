@@ -1,0 +1,13 @@
+=== current bans ===
+   `- Banned IP list:	192.168.118.1
+unbanning 192.168.118.1
+1
+10:ignoreip = 127.0.0.1/8 ::1 192.168.118.0/24
+Status for the jail: sshd
+|- Filter
+|  |- Currently failed:	0
+|  |- Total failed:	0
+|  `- Journal matches:	_SYSTEMD_UNIT=ssh.service + _COMM=sshd
+`- Actions
+   |- Currently banned:	0
+   |- Total banned:	0

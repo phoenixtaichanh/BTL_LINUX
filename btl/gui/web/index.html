@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BTL - Secured Network Service Configuration</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">&#9632;</span>
+    <div>
+      <h1>BTL Toolkit</h1>
+      <p class="sub">Secured Network Service Configuration with SCP, SFTP and SSH</p>
+    </div>
+  </div>
+  <div class="session" id="sessionBox">
+    <span class="dot" id="sessionDot"></span>
+    <span id="sessionText">Chưa kết nối</span>
+    <button class="btn btn-ghost" id="btnDisconnect" hidden>Ngắt kết nối</button>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab active" data-tab="connect" role="tab">Kết nối</button>
+  <button class="tab" data-tab="terminal" role="tab">Terminal</button>
+  <button class="tab" data-tab="files" role="tab">Quản lý tệp</button>
+  <button class="tab" data-tab="audit" role="tab">Kiểm tra bảo mật</button>
+  <button class="tab" data-tab="hostkeys" role="tab">Host Keys</button>
+  <button class="tab" data-tab="config" role="tab">Cấu hình</button>
+  <button class="tab" data-tab="provision" role="tab">Triển khai</button>
+  <button class="tab" data-tab="logs" role="tab">Nhật ký</button>
+</nav>
+
+<main>
+
+<!-- ================= Kết nối ================= -->
+<section class="panel active" id="panel-connect">
+  <div class="card">
+    <h2>Thông tin kết nối SSH</h2>
+    <p class="hint">Kết nối tới máy chủ Ubuntu đích. Khóa công khai của máy chủ phải được tin cậy
+      trước, nếu không thì thao tác sẽ bị từ chối.</p>
+
+    <div class="grid">
+      <label class="field">
+        <span>Địa chỉ máy chủ <em>*</em></span>
+        <input id="cHost" type="text" placeholder="192.168.118.128" value="192.168.118.128">
+      </label>
+      <label class="field">
+        <span>Cổng</span>
+        <input id="cPort" type="number" value="22" min="1" max="65535">
+      </label>
+      <label class="field">
+        <span>Tài khoản</span>
+        <input id="cUser" type="text" value="tuananh">
+      </label>
+      <label class="field">
+        <span>Cổng kết nối (giây)</span>
+        <input id="cTimeout" type="number" value="15" min="1" max="600">
+      </label>
+    </div>
+
+    <label class="field">
+      <span>Cách xác thực</span>
+      <select id="cAuthMethod">
+        <option value="key">Khóa công khai (khuyến nghị)</option>
+        <option value="agent">SSH Agent</option>
+        <option value="password">Mật khẩu (không khuyến nghị)</option>
+      </select>
+    </label>
+
+    <div id="authKey" class="field">
+      <label class="field">
+        <span>Đường dẫn khóa riêng <em>*</em></span>
+        <input id="cKeyPath" type="text" placeholder="C:/Users/LOQ/.ssh/id_ed25519">
+      </label>
+      <label class="field">
+        <span>Mật khẩu bảo vệ khóa</span>
+        <input id="cPassphrase" type="password" autocomplete="off">
+      </label>
+    </div>
+
+    <div id="authPassword" class="field" hidden>
+      <label class="field">
+        <span>Mật khẩu</span>
+        <input id="cPassword" type="password" autocomplete="off">
+      </label>
+    </div>
+
+    <label class="field">
+      <span>Mật khẩu sudo (để chạy <code>sudo sshd -T</code>)</span>
+      <input id="cSudoPassword" type="password" autocomplete="off">
+    </label>
+
+    <details class="advanced">
+      <summary>Tuỳ chọn nâng cao</summary>
+      <label class="field">
+        <span>Tệp known_hosts</span>
+        <input id="cKnownHosts" type="text" placeholder="mặc định: ~/.ssh/known_hosts">
+      </label>
+      <label class="check">
+        <input id="cAutoAccept" type="checkbox">
+        <span>Tự động chấp nhận host key lạ (KHÔNG NÊN dùng)</span>
+      </label>
+    </details>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="btnConnect">Kết nối</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= Terminal ================= -->
+<section class="panel" id="panel-terminal">
+  <div class="card">
+    <h2>Thực thi lệnh từ xa</h2>
+    <div class="cmd-row">
+      <input id="tCommand" type="text" placeholder="uname -a" autocomplete="off">
+      <button class="btn btn-primary" id="btnRun">Chạy</button>
+    </div>
+    <div class="quick">
+      <button class="chip" data-cmd="uname -a">uname -a</button>
+      <button class="chip" data-cmd="whoami">whoami</button>
+      <button class="chip" data-cmd="id">id</button>
+      <button class="chip" data-cmd="systemctl status ssh --no-pager">sshd status</button>
+      <button class="chip" data-cmd="sudo -S -p '' sshd -T">sshd -T</button>
+      <button class="chip" data-cmd="ufw status verbose">ufw status</button>
+      <button class="chip" data-cmd="fail2ban-client status sshd">fail2ban</button>
+      <button class="chip" data-cmd="journalctl -u ssh --no-pager -n 50">ssh log</button>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn btn-ghost" id="btnInfo">Thông tin máy chủ</button>
+      <span class="status" id="tStatus"></span>
+    </div>
+    <pre class="output" id="tOutput"></pre>
+  </div>
+</section>
+
+<!-- ================= Quản lý tệp ================= -->
+<section class="panel" id="panel-files">
+  <div class="card">
+    <h2>Quản lý tệp từ xa</h2>
+
+    <div class="tabs sub-tabs">
+      <button class="tab active" data-subtab="sftp">SFTP</button>
+      <button class="tab" data-subtab="scp">SCP</button>
+    </div>
+
+    <!-- SFTP -->
+    <div class="subpanel active" id="sub-sftp">
+      <div class="toolbar">
+        <input id="fSftpRoot" type="text" placeholder="Virtual root (vd: /opt/sftp-jails/abc, để trống = không giới hạn)">
+        <button class="btn" id="btnSftpList">Liệt kê</button>
+      </div>
+      <div class="toolbar">
+        <input id="fSftpPath" type="text" placeholder="/đường/dẫn/thư mục" value="/">
+        <button class="btn btn-ghost" id="btnSftpUp">Lên</button>
+        <button class="btn btn-ghost" id="btnSftpRefresh">Làm mới</button>
+      </div>
+      <table class="grid-table">
+        <thead>
+          <tr><th>Tên</th><th>Quyền</th><th>Kích thước</th><th>Loại</th><th></th></tr>
+        </thead>
+        <tbody id="fSftpBody"></tbody>
+      </table>
+      <div class="split">
+        <div class="split-col">
+          <h3>Tải lên (upload)</h3>
+          <input id="fUpRemote" type="text" placeholder="/đường/dẫn/đích">
+          <input id="fUpLocal" type="file">
+          <label class="check"><input id="fUpResume" type="checkbox"><span>Tiếp tục (resume)</span></label>
+          <button class="btn btn-primary" id="btnSftpUpload">Tải lên</button>
+        </div>
+        <div class="split-col">
+          <h3>Tải xuống (download)</h3>
+          <input id="fDownRemote" type="text" placeholder="/đường/dẫn/nguồn">
+          <input id="fDownLocal" type="text" placeholder="đường dẫn cục bộ để lưu">
+          <label class="check"><input id="fDownResume" type="checkbox"><span>Tiếp tục (resume)</span></label>
+          <button class="btn btn-primary" id="btnSftpDownload">Tải xuống</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCP -->
+    <div class="subpanel" id="sub-scp">
+      <div class="split">
+        <div class="split-col">
+          <h3>Tải lên (upload)</h3>
+          <input id="fScpUpLocal" type="text" placeholder="đường dẫn cục bộ">
+          <input id="fScpUpRemote" type="text" placeholder="/đường/dẫn/đích">
+          <label class="check"><input id="fScpUpRec" type="checkbox"><span>Đệ quy (thư mục)</span></label>
+          <label class="check"><input id="fScpUpTime" type="checkbox"><span>Giữ thời gian sửa</span></label>
+          <button class="btn btn-primary" id="btnScpUpload">Tải lên qua SCP</button>
+        </div>
+        <div class="split-col">
+          <h3>Tải xuống (download)</h3>
+          <input id="fScpDownRemote" type="text" placeholder="/đường/dẫn/nguồn">
+          <input id="fScpDownLocal" type="text" placeholder="đường dẫn cục bộ để lưu">
+          <label class="check"><input id="fScpDownRec" type="checkbox"><span>Đệ quy (thư mục)</span></label>
+          <label class="check"><input id="fScpDownTime" type="checkbox"><span>Giữ thời gian sửa</span></label>
+          <button class="btn btn-primary" id="btnScpDownload">Tải xuống qua SCP</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= Kiểm tra bảo mật ================= -->
+<section class="panel" id="panel-audit">
+  <div class="card">
+    <h2>Kiểm tra cấu hình sshd</h2>
+    <p class="hint">Đọc cấu hình hiệu lực bằng <code>sshd -T</code> và so sánh với baseline.</p>
+    <div class="toolbar">
+      <button class="btn btn-primary" id="btnAuditRemote">Máy chủ từ xa</button>
+      <button class="btn" id="btnAuditLocal">Máy cục bộ</button>
+      <span class="status" id="aStatus"></span>
+    </div>
+    <div id="aSummary" class="summary" hidden></div>
+    <table class="grid-table">
+      <thead>
+        <tr><th>Chỉ thị</th><th>Kỳ vọng</th><th>Thực tế</th><th>Trạng thái</th></tr>
+      </thead>
+      <tbody id="aBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= Host keys ================= -->
+<section class="panel" id="panel-hostkeys">
+  <div class="card">
+    <h2>Kho host key tin cậy</h2>
+    <p class="hint">Mọi host key đều phải được xác minh trước khi kết nối. Host key thay đổi là
+      dấu hiệu của một cuộc tấn công man-in-the-middle.</p>
+    <div class="toolbar">
+      <input id="hKnownHosts" type="text" placeholder="đường dẫn known_hosts">
+      <button class="btn btn-primary" id="btnHostkeyList">Danh sách</button>
+    </div>
+    <div class="split">
+      <div class="split-col">
+        <h3>Thêm host key</h3>
+        <input id="hHostname" type="text" placeholder="192.168.118.128">
+        <input id="hKeyFile" type="text" placeholder="đường dẫn tệp .pub hoặc known_hosts">
+        <button class="btn btn-primary" id="btnHostkeyAdd">Thêm</button>
+      </div>
+      <div class="split-col">
+        <h3>Xóa host key</h3>
+        <input id="hRemoveHost" type="text" placeholder="tên máy chủ cần xóa">
+        <button class="btn btn-danger" id="btnHostkeyRemove">Xóa</button>
+      </div>
+    </div>
+    <table class="grid-table">
+      <thead><tr><th>Máy chủ</th><th>Loại khóa</th><th>Vân tay SHA256</th><th>Ghi chú</th></tr></thead>
+      <tbody id="hBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= Cấu hình ================= -->
+<section class="panel" id="panel-config">
+  <div class="card">
+    <h2>Kết xuất tệp cấu hình</h2>
+    <p class="hint">Hiển thị cấu hình sẽ được ghi lên máy chủ, không thay đổi gì.</p>
+    <div class="toolbar">
+      <select id="cfWhat">
+        <option value="sshd">sshd_config (hardening)</option>
+        <option value="sshd-sftp">sshd Match block cho SFTP</option>
+        <option value="fail2ban">fail2ban jail.local</option>
+        <option value="firewall">ufw script</option>
+        <option value="audit">auditd rules</option>
+      </select>
+      <input id="cfPort" type="number" value="22" min="1" max="65535" title="cổng">
+      <input id="cfGroups" type="text" value="sshusers" title="nhóm được phép">
+      <input id="cfSftpUsers" type="text" placeholder="tài khoản SFTP" title="tài khoản SFTP">
+      <button class="btn btn-primary" id="btnRender">Kết xuất</button>
+      <button class="btn btn-ghost" id="btnCopy">Sao chép</button>
+    </div>
+    <pre class="output" id="cfOutput"></pre>
+  </div>
+</section>
+
+<!-- ================= Triển khai ================= -->
+<section class="panel" id="panel-provision">
+  <div class="card">
+    <h2>Triển khai cấu hình tăng cường</h2>
+    <p class="hint">Cài đặt gói, tạo tài khoản, ghi cấu hình và khởi động lại dịch vụ.
+      Tường lửa được áp dụng sau cùng để không khóa chính bạn ra khỏi máy chủ.</p>
+
+    <div class="grid">
+      <label class="field"><span>Nhóm được phép SSH</span><input id="pGroup" type="text" value="sshusers"></label>
+      <label class="field"><span>Tài khoản quản trị (phân cách bởi dấu phẩy)</span><input id="pAdminUsers" type="text" placeholder="admin01,admin02"></label>
+      <label class="field"><span>Tài khoản SFTP (phân cách bởi dấu phẩy)</span><input id="pSftpUsers" type="text" placeholder="sftpuser"></label>
+      <label class="field"><span>Khóa công khai cho quản trị</span><input id="pAdminKey" type="text" placeholder="đường dẫn .pub"></label>
+      <label class="field"><span>Khóa công khai cho SFTP</span><input id="pSftpKey" type="text" placeholder="đường dẫn .pub"></label>
+      <label class="field"><span>Địa chỉ fail2ban không bao giờ chặn</span><input id="pIgnore" type="text" placeholder="192.168.118.0/24"></label>
+    </div>
+    <div class="checks">
+      <label class="check"><input id="pLimit" type="checkbox"><span>Dùng <code>ufw limit</code> thay vì <code>ufw allow</code></span></label>
+      <label class="check"><input id="pNoFirewall" type="checkbox"><span>Không cấu hình tường lửa</span></label>
+    </div>
+    <div class="actions">
+      <button class="btn" id="btnProvisionPreview">Xem trước kế hoạch</button>
+      <button class="btn btn-danger" id="btnProvisionApply">Áp dụng lên máy chủ</button>
+    </div>
+    <div id="pOutput" class="prov-output"></div>
+  </div>
+</section>
+
+<!-- ================= Nhật ký ================= -->
+<section class="panel" id="panel-logs">
+  <div class="card">
+    <h2>Nhật ký hoạt động</h2>
+    <div class="toolbar">
+      <button class="btn btn-ghost" id="btnClearLog">Xóa nhật ký</button>
+      <span class="status" id="lStatus"></span>
+    </div>
+    <pre class="output log" id="lOutput"></pre>
+  </div>
+</section>
+
+</main>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

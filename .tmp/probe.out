@@ -1,0 +1,28 @@
+=== identity ===
+uid=1000(tuananh) gid=1000(tuananh) groups=1000(tuananh),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),100(users),111(lpadmin),114(lxd),973(research)
+=== sudo ===
+
+uid=0(root) gid=0(root) groups=0(root)
+=== os ===
+Ubuntu 26.04 LTS
+=== openssh-server ===
+│││ Name           Version      Architecture Description
+├┼┼─══════════════─════════════─════════════─═════════════════════════════════
+un  openssh-server <none>       <none>       (no description available)
+ls: cannot access '/usr/sbin/sshd': No such file or directory
+=== sshd running ===
+inactive
+not-found
+=== port 22 ===
+nothing on 22
+=== tools ===
+/usr/bin/ssh
+/usr/bin/sftp
+/usr/bin/scp
+/snap/bin/curl
+/usr/bin/git
+/usr/bin/python3
+=== network ===
+    inet 192.168.118.128/24 brd 192.168.118.255 scope global dynamic noprefixroute ens33
+=== ip fwd ===
+0

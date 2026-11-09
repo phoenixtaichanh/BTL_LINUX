@@ -1,0 +1,83 @@
+=== ufw status verbose ===
+Status: active
+Logging: on (low)
+Default: deny (incoming), allow (outgoing), disabled (routed)
+New profiles: skip
+
+To                         Action      From
+--                         ------      ----
+22/tcp                     LIMIT IN    Anywhere                  
+22/tcp (v6)                LIMIT IN    Anywhere (v6)             
+
+=== fail2ban banned IPs ===
+Status for the jail: sshd
+|- Filter
+|  |- Currently failed:	1
+|  |- Total failed:	5
+|  `- Journal matches:	_SYSTEMD_UNIT=ssh.service + _COMM=sshd
+`- Actions
+   |- Currently banned:	1
+   |- Total banned:	1
+   `- Banned IP list:	192.168.118.1
+=== fail2ban banned list (raw) ===
+192.168.118.1
+=== ufw user rules ===
+Status: active
+
+     To                         Action      From
+     --                         ------      ----
+[ 1] 22/tcp                     LIMIT IN    Anywhere                  
+[ 2] 22/tcp (v6)                LIMIT IN    Anywhere (v6)             
+
+=== sshd listening ===
+LISTEN 0      4096         0.0.0.0:22        0.0.0.0:*   
+LISTEN 0      4096            [::]:22           [::]:*   
+=== recent fail2ban log ===
+2026-11-08 23:52:23,828 fail2ban.jail           [11124]: INFO    Jail 'recidive' uses systemd {}
+2026-11-08 23:52:23,830 fail2ban.jail           [11124]: INFO    Initiated 'systemd' backend
+2026-11-08 23:52:23,835 fail2ban.filtersystemd  [11124]: INFO    [recidive] Added journal match for: '_SYSTEMD_UNIT=fail2ban.service'
+2026-11-08 23:52:23,835 fail2ban.filter         [11124]: INFO      maxRetry: 3
+2026-11-08 23:52:23,835 fail2ban.filter         [11124]: INFO      findtime: 86400
+2026-11-08 23:52:23,835 fail2ban.actions        [11124]: INFO      banTime: 604800
+2026-11-08 23:52:23,835 fail2ban.jail           [11124]: INFO    Set banTime.increment = True
+2026-11-08 23:52:23,835 fail2ban.jail           [11124]: INFO    Set banTime.factor = 1
+2026-11-08 23:52:23,835 fail2ban.jail           [11124]: INFO    Set banTime.maxtime = 1w
+2026-11-08 23:52:23,836 fail2ban.filter         [11124]: INFO      encoding: UTF-8
+2026-11-08 23:52:23,840 fail2ban.jail           [11124]: INFO    Jail 'sshd' started
+2026-11-08 23:52:23,841 fail2ban.filtersystemd  [11124]: INFO    [sshd] Jail is in operation now (process new journal entries)
+2026-11-08 23:52:23,842 fail2ban.filtersystemd  [11124]: INFO    [recidive] Jail is in operation now (process new journal entries)
+2026-11-08 23:52:23,843 fail2ban.jail           [11124]: INFO    Jail 'recidive' started
+2026-11-08 23:54:25,851 fail2ban.filter         [11124]: INFO    [sshd] Found 192.168.118.1 - 2026-11-08 23:54:25
+2026-11-08 23:54:25,852 fail2ban.filter         [11124]: INFO    [sshd] Found 192.168.118.1 - 2026-11-08 23:54:25
+2026-11-08 23:54:25,852 fail2ban.filter         [11124]: INFO    [sshd] Found 192.168.118.1 - 2026-11-08 23:54:25
+2026-11-08 23:54:25,969 fail2ban.actions        [11124]: NOTICE  [sshd] Ban 192.168.118.1
+2026-11-08 23:54:26,163 fail2ban.filter         [11124]: INFO    [sshd] Found 192.168.118.1 - 2026-11-08 23:54:25
+2026-11-08 23:54:26,165 fail2ban.filter         [11124]: INFO    [sshd] Found 192.168.118.1 - 2026-11-08 23:54:25
+=== recent ufw log ===
+tail: cannot open '/var/log/ufw.log' for reading: No such file or directory
+=== auth log ===
+2026-11-08T23:54:25.672723+07:00 VKU sshd-session[12521]: Connection closed by authenticating user tuananh 192.168.118.1 port 55978 [preauth]
+2026-11-08T23:54:25.675468+07:00 VKU sshd[6468]: srclimit_penalise: ipv4: new 192.168.118.1/32 deferred penalty of 1 seconds for penalty: connections without attempting authentication
+2026-11-08T23:54:25.710475+07:00 VKU sshd-session[12523]: Connection from 192.168.118.1 port 55979 on 192.168.118.128 port 22 rdomain ""
+2026-11-08T23:54:25.768637+07:00 VKU sshd-session[12523]: User root from 192.168.118.1 not allowed because none of user's groups are listed in AllowGroups
+2026-11-08T23:54:25.779057+07:00 VKU sshd-session[12523]: Connection closed by invalid user root 192.168.118.1 port 55979 [preauth]
+2026-11-08T23:54:25.818148+07:00 VKU sshd-session[12525]: Connection from 192.168.118.1 port 55981 on 192.168.118.128 port 22 rdomain ""
+2026-11-08T23:54:25.879966+07:00 VKU sshd-session[12525]: User nobody from 192.168.118.1 not allowed because none of user's groups are listed in AllowGroups
+2026-11-08T23:54:25.894551+07:00 VKU sshd-session[12525]: Connection closed by invalid user nobody 192.168.118.1 port 55981 [preauth]
+2026-11-08T23:54:25.932533+07:00 VKU sshd-session[12528]: Connection from 192.168.118.1 port 55982 on 192.168.118.128 port 22 rdomain ""
+2026-11-08T23:54:26.001138+07:00 VKU sshd-session[12528]: Accepted key ED25519 SHA256:m4kW22M0szqUaPVwwxkPtrD7SMSxKJ9xq4QomrQIulU found at /home/tuananh/.ssh/authorized_keys:1
+2026-11-08T23:54:26.009253+07:00 VKU sshd-session[12528]: Postponed publickey for tuananh from 192.168.118.1 port 55982 ssh2 [preauth]
+2026-11-08T23:54:26.009344+07:00 VKU sshd-session[12528]: Accepted key ED25519 SHA256:m4kW22M0szqUaPVwwxkPtrD7SMSxKJ9xq4QomrQIulU found at /home/tuananh/.ssh/authorized_keys:1
+2026-11-08T23:54:26.021529+07:00 VKU sshd-session[12528]: Accepted publickey for tuananh from 192.168.118.1 port 55982 ssh2: ED25519 SHA256:m4kW22M0szqUaPVwwxkPtrD7SMSxKJ9xq4QomrQIulU
+2026-11-08T23:54:26.031505+07:00 VKU sshd-session[12528]: pam_unix(sshd:session): session opened for user tuananh(uid=1000) by tuananh(uid=0)
+2026-11-08T23:54:26.047019+07:00 VKU systemd-logind[1218]: New session '17' of user 'tuananh' with class 'user' and type 'tty'.
+2026-11-08T23:54:26.163124+07:00 VKU sshd-session[12528]: User child is on pid 12579
+2026-11-08T23:57:35.930285+07:00 VKU VGAuth[866]: vmtoolsd: Username and password successfully validated for 'tuananh'.
+2026-11-08T23:57:35.966349+07:00 VKU VGAuth[866]: vmtoolsd: Username and password successfully validated for 'tuananh'.
+2026-11-08T23:57:35.988286+07:00 VKU sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-08T23:57:35.990589+07:00 VKU sudo: tuananh :  PWD=/ ; USER=root ; COMMAND=/usr/bin/bash /home/tuananh/probe4.sh
+2026-11-08T23:57:35.992690+07:00 VKU sudo: pam_unix(sudo:session): session closed for user root
+2026-11-08T23:57:37.370609+07:00 VKU VGAuth[866]: vmtoolsd: Username and password successfully validated for 'tuananh'.
+2026-11-08T23:57:43.813639+07:00 VKU VGAuth[866]: message repeated 15 times: [ vmtoolsd: Username and password successfully validated for 'tuananh'.]
+2026-11-08T23:57:43.833482+07:00 VKU sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-08T23:57:43.833595+07:00 VKU sudo: tuananh :  PWD=/ ; USER=root ; COMMAND=/usr/bin/bash /home/tuananh/probe4.sh

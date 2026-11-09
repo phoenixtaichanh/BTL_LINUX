@@ -1,0 +1,68 @@
++ export DEBIAN_FRONTEND=noninteractive
++ DEBIAN_FRONTEND=noninteractive
++ echo 1234
++ sudo -S -p '' true
+
++ RC=0
++ echo 'sudo check rc=0'
+sudo check rc=0
++ sudo -S -p '' apt-get update -o Acquire::Retries=3
++ tail -20
+Hit:1 http://vn.archive.ubuntu.com/ubuntu resolute InRelease
+Hit:2 http://vn.archive.ubuntu.com/ubuntu resolute-updates InRelease
+Hit:3 http://vn.archive.ubuntu.com/ubuntu resolute-backports InRelease
+Hit:4 http://security.ubuntu.com/ubuntu resolute-security InRelease
+Reading package lists...
++ echo '=== update rc=0 ==='
+=== update rc=0 ===
++ sudo -S -p '' apt-get install -y openssh-server openssh-client
++ tail -30
+Selecting previously unselected package openssh-server.
+Preparing to unpack …/openssh-server_1%3a10.2p1-2ubuntu3.8_amd64.deb…
+Unpacking openssh-server (1:10.2p1-2ubuntu3.8)…
+Selecting previously unselected package ssh-import-id.
+Preparing to unpack …/ssh-import-id_5.11-0ubuntu4_all.deb…
+Unpacking ssh-import-id (5.11-0ubuntu4)…
+Setting up openssh-client (1:10.2p1-2ubuntu3.8)…
+Setting up ssh-import-id (5.11-0ubuntu4)…
+Setting up ncurses-term (6.6+20251231-1)…
+Setting up openssh-sftp-server (1:10.2p1-2ubuntu3.8)…
+Setting up openssh-server (1:10.2p1-2ubuntu3.8)…
+debconf: unable to initialize frontend: Dialog
+debconf: (Dialog frontend will not work on a dumb terminal, an emacs shell buffer, or without a controlling terminal.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Teletype
+debconf: unable to initialize frontend: Teletype
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Noninteractive
+Creating config file /etc/ssh/sshd_config with new version
+Creating user 'sshd' (sshd user) with UID 972 and GID 65534.
+Created symlink '/etc/systemd/system/sockets.target.wants/ssh.socket' → '/usr/lib/systemd/system/ssh.socket'.
+Created symlink '/etc/systemd/system/ssh.service.requires/ssh.socket' → '/usr/lib/systemd/system/ssh.socket'.
+Created symlink '/etc/systemd/system/ssh.service.wants/sshd-keygen.service' → '/usr/lib/systemd/system/sshd-keygen.service'.
+Created symlink '/etc/systemd/system/sshd.service.wants/sshd-keygen.service' → '/usr/lib/systemd/system/sshd-keygen.service'.
+Created symlink '/etc/systemd/system/sshd@.service.wants/sshd-keygen.service' → '/usr/lib/systemd/system/sshd-keygen.service'.
+Created symlink '/etc/systemd/system/ssh.socket.wants/sshd-keygen.service' → '/usr/lib/systemd/system/sshd-keygen.service'.
+Processing triggers for man-db (2.13.1-1build1)…
+Processing triggers for ufw (0.36.2-9build1)…
++ echo '=== install rc=0 ==='
+=== install rc=0 ===
++ sudo -S -p '' systemctl enable --now ssh
+Synchronizing state of ssh.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+Executing: /usr/lib/systemd/systemd-sysv-install enable ssh
+Created symlink '/etc/systemd/system/sshd.service' → '/usr/lib/systemd/system/ssh.service'.
+Created symlink '/etc/systemd/system/multi-user.target.wants/ssh.service' → '/usr/lib/systemd/system/ssh.service'.
++ echo '=== enable rc=0 ==='
+=== enable rc=0 ===
++ systemctl is-active ssh
+active
++ systemctl is-enabled ssh
+enabled
++ ls -l /usr/sbin/sshd
+-rwxr-xr-x 1 root root 408536 Oct  8 23:36 /usr/sbin/sshd
++ ss -ltn
++ grep :22
+LISTEN 0      4096         0.0.0.0:22        0.0.0.0:*   
+LISTEN 0      4096            [::]:22           [::]:*   

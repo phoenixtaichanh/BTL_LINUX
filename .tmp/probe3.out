@@ -1,0 +1,60 @@
+
+=== sshd -T | grep auth directives ===
+pubkeyauthentication yes
+passwordauthentication no
+kbdinteractiveauthentication no
+pubkeyacceptedalgorithms ssh-ed25519-cert-v01@openssh.com,ecdsa-sha2-nistp256-cert-v01@openssh.com,ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521-cert-v01@openssh.com,sk-ssh-ed25519-cert-v01@openssh.com,sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,rsa-sha2-512-cert-v01@openssh.com,rsa-sha2-256-cert-v01@openssh.com,ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ssh-ed25519@openssh.com,sk-ecdsa-sha2-nistp256@openssh.com,rsa-sha2-512,rsa-sha2-256
+pubkeyauthoptions none
+=== sshd -t warnings ===
+=== full -T line count ===
+106
+=== ufw status ===
+Status: active
+Logging: on (low)
+Default: deny (incoming), allow (outgoing), disabled (routed)
+New profiles: skip
+
+To                         Action      From
+--                         ------      ----
+22/tcp                     LIMIT IN    Anywhere                  
+22/tcp (v6)                LIMIT IN    Anywhere (v6)             
+
+=== fail2ban jails ===
+Status
+|- Number of jail:	2
+`- Jail list:	recidive, sshd
+=== auditd ===
+active
+-w /etc/ssh/sshd_config -p wa -k btl_sshd_config
+-w /etc/sudoers -p wa -k btl_sudoers
+-w /etc/sudoers.d -p wa -k btl_sudoers
+-w /etc/passwd -p wa -k btl_identity
+-w /etc/group -p wa -k btl_identity
+=== accounts ===
+btladmin:x:1002:1002::/home/btladmin:/bin/bash
+ftpsvc:x:1003:1003::/home/ftpsvc:/bin/bash
+=== groups ===
+uid=1002(btladmin) gid=1002(btladmin) groups=1002(btladmin),100(users),1001(sshusers)
+uid=1003(ftpsvc) gid=1003(ftpsvc) groups=1003(ftpsvc),100(users),1001(sshusers)
+=== jail ===
+total 12
+drwxr-xr-x 3 root   root   4096 Nov  8 23:47 .
+drwxr-xr-x 3 root   root   4096 Nov  8 23:47 ..
+drwx------ 2 ftpsvc ftpsvc 4096 Nov  8 23:47 upload
+=== authorized_keys ===
+/home/btladmin/.ssh/:
+total 12
+drwx------ 2 btladmin btladmin 4096 Nov  8 23:47 .
+drwxr-x--- 3 btladmin btladmin 4096 Nov  8 23:47 ..
+-rw------- 1 btladmin btladmin  214 Nov  8 23:52 authorized_keys
+
+/home/ftpsvc/.ssh/:
+total 12
+drwx------ 2 ftpsvc ftpsvc 4096 Nov  8 23:47 .
+drwxr-x--- 3 ftpsvc ftpsvc 4096 Nov  8 23:47 ..
+-rw------- 1 ftpsvc ftpsvc  212 Nov  8 23:52 authorized_keys
+=== banner ===
+This system is restricted to authorised users.
+All connections are logged and monitored.
+Misuse of this system is a criminal offence.
+

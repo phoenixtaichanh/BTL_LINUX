@@ -1,0 +1,55 @@
+=== ufw status numbered ===
+Status: active
+
+     To                         Action      From
+     --                         ------      ----
+[ 1] 22/tcp                     LIMIT IN    Anywhere                  
+[ 2] 22/tcp (v6)                LIMIT IN    Anywhere (v6)             
+
+=== fail2ban sshd ===
+Status for the jail: sshd
+|- Filter
+|  |- Currently failed:	0
+|  |- Total failed:	0
+|  `- Journal matches:	_SYSTEMD_UNIT=ssh.service + _COMM=sshd
+`- Actions
+   |- Currently banned:	0
+   |- Total banned:	0
+   `- Banned IP list:	
+=== fail2ban ignoreip in jail ===
+10:ignoreip = 127.0.0.1/8 ::1 192.168.118.0/24
+=== fail2ban log tail ===
+2026-11-09 00:07:17,678 fail2ban.filtersystemd  [14135]: INFO    [recidive] Jail is in operation now (process new journal entries)
+2026-11-09 00:07:17,680 fail2ban.jail           [14135]: INFO    Jail 'recidive' started
+2026-11-09 00:07:48,938 fail2ban.filter         [14135]: INFO    [sshd] Ignore 192.168.118.1 by ip
+2026-11-09 00:07:48,939 fail2ban.filter         [14135]: INFO    [sshd] Ignore 192.168.118.1 by ip
+2026-11-09 00:07:48,940 fail2ban.filter         [14135]: INFO    [sshd] Ignore 192.168.118.1 by ip
+2026-11-09 00:07:48,989 fail2ban.filter         [14135]: INFO    [sshd] Ignore 192.168.118.1 by ip
+2026-11-09 00:07:49,318 fail2ban.filter         [14135]: INFO    [sshd] Ignore 192.168.118.1 by ip
+2026-11-09 00:12:48,452 fail2ban.filter         [14135]: INFO    [sshd] Ignore 192.168.118.1 by ip
+2026-11-09 00:12:48,453 fail2ban.filter         [14135]: INFO    [sshd] Ignore 192.168.118.1 by ip
+2026-11-09 00:12:48,453 fail2ban.filter         [14135]: INFO    [sshd] Ignore 192.168.118.1 by ip
+2026-11-09 00:12:48,775 fail2ban.filter         [14135]: INFO    [sshd] Ignore 192.168.118.1 by ip
+2026-11-09 00:12:48,776 fail2ban.filter         [14135]: INFO    [sshd] Ignore 192.168.118.1 by ip
+=== ufw log ===
+-- Boot 5982297f59154a39aead931eb1ef6e9c --
+Oct 20 09:38:51 VKU systemd[1]: Starting ufw.service - Uncomplicated firewall...
+Oct 20 09:38:51 VKU systemd[1]: Finished ufw.service - Uncomplicated firewall.
+-- Boot 246eafa61048450f93441921ee9595a0 --
+Oct 20 09:41:22 VKU systemd[1]: Starting ufw.service - Uncomplicated firewall...
+Oct 20 09:41:22 VKU systemd[1]: Finished ufw.service - Uncomplicated firewall.
+-- Boot 5344d9d798064b708b29dfbb9bd6dd80 --
+Oct 20 09:43:16 VKU systemd[1]: Starting ufw.service - Uncomplicated firewall...
+Oct 20 09:43:16 VKU systemd[1]: Finished ufw.service - Uncomplicated firewall.
+-- Boot c298f593f5c84e398d7649bb564eb6d9 --
+Nov 03 09:22:25 VKU systemd[1]: Starting ufw.service - Uncomplicated firewall...
+Nov 03 09:22:25 VKU systemd[1]: Finished ufw.service - Uncomplicated firewall.
+-- Boot 3f84b4e701f04384930f1bdffe50816a --
+Nov 08 23:21:56 VKU systemd[1]: Starting ufw.service - Uncomplicated firewall...
+Nov 08 23:21:56 VKU systemd[1]: Finished ufw.service - Uncomplicated firewall.
+=== kernel ===
+[ 3264.966535] [UFW LIMIT BLOCK] IN=ens33 OUT= MAC=00:0c:29:56:b4:91:00:50:56:c0:00:08:08:00 SRC=192.168.118.1 DST=192.168.118.128 LEN=52 TOS=0x00 PREC=0x00 TTL=128 ID=17705 DF PROTO=TCP SPT=61442 DPT=22 WINDOW=65535 RES=0x00 SYN URGP=0 
+[ 3287.599311] [UFW LIMIT BLOCK] IN=ens33 OUT= MAC=00:0c:29:56:b4:91:00:50:56:c0:00:08:08:00 SRC=192.168.118.1 DST=192.168.118.128 LEN=52 TOS=0x00 PREC=0x00 TTL=128 ID=17709 DF PROTO=TCP SPT=49700 DPT=22 WINDOW=65535 RES=0x00 SYN URGP=0 
+[ 3304.668469] [UFW LIMIT BLOCK] IN=ens33 OUT= MAC=00:0c:29:56:b4:91:00:50:56:c0:00:08:08:00 SRC=192.168.118.1 DST=192.168.118.128 LEN=52 TOS=0x00 PREC=0x00 TTL=128 ID=17716 DF PROTO=TCP SPT=49703 DPT=22 WINDOW=65535 RES=0x00 SYN URGP=0 
+[ 3324.756254] [UFW LIMIT BLOCK] IN=ens33 OUT= MAC=00:0c:29:56:b4:91:00:50:56:c0:00:08:08:00 SRC=192.168.118.1 DST=192.168.118.128 LEN=52 TOS=0x00 PREC=0x00 TTL=128 ID=17724 DF PROTO=TCP SPT=49716 DPT=22 WINDOW=65535 RES=0x00 SYN URGP=0 
+[ 3344.881823] [UFW LIMIT BLOCK] IN=ens33 OUT= MAC=00:0c:29:56:b4:91:00:50:56:c0:00:08:08:00 SRC=192.168.118.1 DST=192.168.118.128 LEN=52 TOS=0x00 PREC=0x00 TTL=128 ID=17732 DF PROTO=TCP SPT=49722 DPT=22 WINDOW=65535 RES=0x00 SYN URGP=0 

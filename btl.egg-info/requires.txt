@@ -1,0 +1,5 @@
+paramiko>=3.4
+PyYAML>=6.0
+
+[dev]
+pytest>=8.0
